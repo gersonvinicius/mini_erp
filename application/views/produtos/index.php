@@ -35,12 +35,13 @@ ob_start();
             <h5 class="mb-0">Variações do Produto</h5>
         </div>
         <div class="card-body">
-            <p>Adicione variações e controle seus estoques.</p>
+            <p>Adicione variações e controle seus estoques e preços adicionais.</p>
             <table class="table table-bordered" id="tabela-variacoes">
                 <thead class="table-light">
                     <tr>
                         <th>Nome da Variação</th>
                         <th>Estoque</th>
+                        <th>Preço Adicional (R$)</th>
                         <th>Ações</th>
                     </tr>
                 </thead>

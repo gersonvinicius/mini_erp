@@ -42,6 +42,7 @@ $(document).ready(function () {
                             <tr>
                                 <td><input type="text" name="variacoes[nome][]" class="form-control" value="${variacao.nome}" required></td>
                                 <td><input type="number" name="variacoes[estoque][]" class="form-control" value="${variacao.quantidade}" required></td>
+                                <td><input type="number" name="variacoes[preco_adicional][]" class="form-control" step="0.01" value="${variacao.preco_adicional}" required></td>
                                 <td><button type="button" class="btn btn-danger remover-variacao">Remover</button></td>
                             </tr>`;
                         $('#tabela-variacoes tbody').append(linha);
@@ -59,6 +60,7 @@ $(document).ready(function () {
             <tr>
                 <td><input type="text" name="variacoes[nome][]" class="form-control" placeholder="Ex.: Tamanho P" required></td>
                 <td><input type="number" name="variacoes[estoque][]" class="form-control" placeholder="Quantidade" required></td>
+                <td><input type="number" name="variacoes[preco_adicional][]" class="form-control" step="0.01" placeholder="Preço Adicional" required></td>
                 <td><button type="button" class="btn btn-danger remover-variacao">Remover</button></td>
             </tr>`;
         $('#tabela-variacoes tbody').append(linha);

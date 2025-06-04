@@ -26,16 +26,14 @@ class ProdutoModel extends CI_Model
     {
         if (!empty($variacoes)) {
             foreach ($variacoes['nome'] as $key => $nome_variacao) {
-                // Inserir variação
                 $dados_variacao = [
                     'produto_id' => $produto_id,
                     'nome' => $nome_variacao,
-                    'preco_adicional' => 0.00, // Adicional padrão
+                    'preco_adicional' => $variacoes['preco_adicional'][$key], // Salva o preço adicional
                 ];
                 $this->db->insert('variacoes', $dados_variacao);
                 $variacao_id = $this->db->insert_id();
 
-                // Inserir estoque da variação
                 $dados_estoque = [
                     'produto_id' => $produto_id,
                     'variacao_id' => $variacao_id,
@@ -48,30 +46,30 @@ class ProdutoModel extends CI_Model
 
     public function atualizarVariacoes($produto_id, $variacoes)
     {
-        // Atualizar ou criar variações e seus estoques
         if (!empty($variacoes)) {
             foreach ($variacoes['nome'] as $key => $nome_variacao) {
-                // Verifica se a variação já existe
                 $variacao_existente = $this->db->get_where('variacoes', [
                     'produto_id' => $produto_id,
                     'nome' => $nome_variacao,
                 ])->row_array();
 
                 if ($variacao_existente) {
-                    // Atualizar estoque da variação existente
-                    $this->db->where('variacao_id', $variacao_existente['id'])
-                            ->update('estoque', ['quantidade' => $variacoes['estoque'][$key]]);
+                    $this->db->where('id', $variacao_existente['id'])->update('variacoes', [
+                        'preco_adicional' => $variacoes['preco_adicional'][$key], // Atualiza o preço adicional
+                    ]);
+
+                    $this->db->where('variacao_id', $variacao_existente['id'])->update('estoque', [
+                        'quantidade' => $variacoes['estoque'][$key],
+                    ]);
                 } else {
-                    // Criar nova variação
                     $dados_variacao = [
                         'produto_id' => $produto_id,
                         'nome' => $nome_variacao,
-                        'preco_adicional' => 0.00,
+                        'preco_adicional' => $variacoes['preco_adicional'][$key],
                     ];
                     $this->db->insert('variacoes', $dados_variacao);
                     $variacao_id = $this->db->insert_id();
 
-                    // Criar estoque para a nova variação
                     $dados_estoque_variacao = [
                         'produto_id' => $produto_id,
                         'variacao_id' => $variacao_id,
@@ -82,8 +80,8 @@ class ProdutoModel extends CI_Model
             }
         }
 
-        // Opcional: Remover variações que não estão mais na lista
-        $variacoes_nomes = array_map('trim', $variacoes['nome']); // Nomes enviados no formulário
+        // Remover variações não enviadas
+        $variacoes_nomes = array_map('trim', $variacoes['nome']);
         $this->db->where('produto_id', $produto_id)
                 ->where_not_in('nome', $variacoes_nomes)
                 ->delete('variacoes');
