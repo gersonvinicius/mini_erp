@@ -299,6 +299,7 @@ $(document).ready(function () {
     $(document).on('click', '.remover-item', function () {
         const index = $(this).data('index');
         carrinhoItens.splice(index, 1);
+        sessionStorage.setItem('carrinho', JSON.stringify(carrinhoItens)); 
         atualizarCarrinho();
     });
 
@@ -312,8 +313,44 @@ $(document).ready(function () {
             carrinhoItens = []; // Reseta o carrinho
             sessionStorage.setItem('carrinho', JSON.stringify(carrinhoItens)); // Atualiza o sessionStorage
             atualizarCarrinho(); // Atualiza a interface
+            $('#cupom-codigo').val('');
+            $('#cliente-cep').val('');
+            $('#cliente-email').val('');
+            $('#cliente-nome').val('');
+            $('#frete').text('R$ 0,00');
+            $('#total-desconto').text('R$ 0,00');
             alert('Carrinho limpo com sucesso!');
         }
+    });
+
+    $('#validar-cep').on('click', function () {
+        const cep = $('#cliente-cep').val().trim();
+    
+        if (!cep) {
+            alert('Por favor, insira um CEP.');
+            return;
+        }
+    
+        // Consulta o endereço no ViaCEP
+        $.ajax({
+            url: `https://viacep.com.br/ws/${cep}/json/`,
+            method: 'GET',
+            success: function (endereco) {
+                if (endereco.erro) {
+                    alert('CEP inválido.');
+                    return;
+                }
+    
+                // Exibe o endereço
+                $('#endereco-resultado').text(
+                    `${endereco.logradouro}, ${endereco.bairro}, ${endereco.localidade} - ${endereco.uf}`
+                );
+                $('#endereco-cliente').removeClass('hidden');
+            },
+            error: function () {
+                alert('Erro ao consultar o CEP. Tente novamente.');
+            }
+        });
     });
 
     $('#finalizar-compra').on('click', function () {
@@ -322,8 +359,55 @@ $(document).ready(function () {
             return;
         }
     
-        // Redirecionar para o checkout
-        // window.location.href = '/checkout';
+        const clienteNome = $('#cliente-nome').val().trim();
+        const clienteEmail = $('#cliente-email').val().trim();
+        const clienteCep = $('#cliente-cep').val().trim();
+        const cupom = $('#cupom-codigo').val().trim();
+        const subtotal = carrinhoItens.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
+    
+        if (!clienteNome || !clienteEmail || !clienteCep) {
+            alert('Por favor, preencha todos os campos do cliente.');
+            return;
+        }
+    
+        // Envia os dados do pedido para o backend
+        $.ajax({
+            url: '/pedidos/finalizar', // Rota do método `finalizar` no controller
+            method: 'POST',
+            data: {
+                cliente_nome: clienteNome,
+                cliente_email: clienteEmail,
+                cliente_cep: clienteCep,
+                subtotal: subtotal,
+                carrinho: carrinhoItens,
+                cupom: cupom
+            },
+            success: function (response) {
+                const data = JSON.parse(response);
+    
+                if (data.erro) {
+                    alert(data.erro);
+                    return;
+                }
+    
+                // Exibe mensagem de sucesso
+                alert('Compra efetuada com SUCESSO!');
+    
+                // Limpa o carrinho
+                carrinhoItens = [];
+                $('#lista-carrinho').empty();
+                $('#lista-carrinho').append('<p class="text-center text-gray-500">Seu carrinho está vazio.</p>');
+                $('#subtotal').text('R$ 0,00');
+                $('#frete').text('R$ 0,00');
+                $('#cliente-cep').val('');
+                $('#cliente-email').val('');
+                $('#cliente-nome').val('');
+                $('#total-desconto').text('R$ 0,00');
+            },
+            error: function () {
+                alert('Ocorreu um erro ao finalizar o pedido. Tente novamente.');
+            }
+        });
     });
 
     // Abrir o carrinho

@@ -12,13 +12,14 @@
             position: fixed;
             top: 0;
             right: 0;
-            width: 400px; /* Largura do carrinho */
-            height: 100%; /* Altura total da tela */
+            width: 400px; /* Largura fixa do carrinho */
+            height: 100vh; /* Altura total da tela */
+            overflow-y: auto; /* Adiciona rolagem vertical para todo o conteúdo */
             background-color: white; /* Fundo branco */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra */
-            z-index: 1000; /* Garante que o carrinho esteja acima de outros elementos */
+            z-index: 1000; /* Sobrepõe outros elementos */
             transform: translateX(100%); /* Inicialmente fora da tela */
-            transition: transform 0.3s ease-in-out; /* Animação para entrada */
+            transition: transform 0.3s ease-in-out; /* Animação para entrada/saída */
             padding: 10px; /* Espaçamento interno */
         }
 

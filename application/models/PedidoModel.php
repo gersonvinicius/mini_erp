@@ -1,6 +1,6 @@
 <?php
 
-class ProdutoModel extends CI_Model
+class PedidoModel extends CI_Model
 {
     public function salvarPedido($dados)
     {

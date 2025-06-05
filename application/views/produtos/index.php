@@ -118,11 +118,25 @@ ob_start();
             <button id="aplicar-cupom" class="mt-2 w-full bg-blue-600 text-white p-2 rounded">Aplicar</button>
         </div>
 
-        <!-- Frete -->
         <div class="mt-4">
             <label for="cep" class="block text-sm font-medium text-gray-700">CEP:</label>
-            <input type="text" id="cep" class="form-input mt-1 w-full border-gray-300" placeholder="Digite o CEP">
-            <button id="calcular-frete" class="mt-2 w-full bg-green-600 text-white p-2 rounded">Calcular</button>
+            <input type="text" id="cliente-cep" class="form-input mt-1 w-full border-gray-300" placeholder="Digite o CEP">
+            <button id="validar-cep" class="mt-2 w-full bg-green-600 text-white p-2 rounded">Calcular</button>
+        </div>
+
+        <!-- Campo para o endereço (aparece após validar o CEP) -->
+        <div id="endereco-cliente" class="mt-4 hidden">
+            <label class="block text-sm font-medium text-gray-700">Endereço:</label>
+            <p id="endereco-resultado" class="text-sm text-gray-800 mt-1"></p>
+        </div>
+
+        <!-- Campos de Nome e Email -->
+        <div class="mt-4">
+            <label for="cliente-nome" class="block text-sm font-medium text-gray-700">Nome:</label>
+            <input type="text" id="cliente-nome" class="form-input mt-1 w-full border-gray-300">
+            <br>
+            <label for="cliente-email" class="block text-sm font-medium text-gray-700 mt-4">Email:</label>
+            <input type="email" id="cliente-email" class="form-input mt-1 w-full border-gray-300">
         </div>
 
         <!-- Resumo -->
@@ -130,6 +144,10 @@ ob_start();
             <div class="flex justify-between text-sm">
                 <span>Desconto:</span>
                 <span id="total-desconto">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span>Frete:</span>
+                <span id="frete">R$ 0,00</span>
             </div>
             <div class="flex justify-between text-sm">
                 <span>Subtotal:</span>
