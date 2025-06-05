@@ -165,4 +165,48 @@ class Pedidos extends CI_Controller
             return ['status' => false, 'erro' => $e->getMessage()];
         }
     }
+
+    public function webhook()
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        if (!isset($input['pedido_id']) || !isset($input['status'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'ID do pedido e status são obrigatórios.']);
+            return;
+        }
+
+        $pedidoId = $input['pedido_id'];
+        $status = $input['status'];
+
+        // Lista de status válidos
+        $statusValidos = ['pendente', 'finalizado', 'cancelado'];
+
+        // Valida o status recebido
+        if (!in_array($status, $statusValidos)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Status inválido.']);
+            return;
+        }
+
+        $this->load->model('PedidoModel');
+
+        if ($status === 'cancelado') {
+            $resultado = $this->PedidoModel->removerPedido($pedidoId);
+
+            if ($resultado) {
+                echo json_encode(['success' => 'Pedido removido com sucesso.']);
+            } else {
+                echo json_encode(['error' => 'Pedido não encontrado ou não pôde ser removido.']);
+            }
+        } else {
+            $resultado = $this->PedidoModel->atualizarStatus($pedidoId, $status);
+
+            if ($resultado) {
+                echo json_encode(['success' => 'Status do pedido atualizado com sucesso.']);
+            } else {
+                echo json_encode(['error' => 'Pedido não encontrado ou não pôde ser atualizado.']);
+            }
+        }
+    }
 }
