@@ -21,14 +21,31 @@ class Produtos extends CI_Controller
             echo "<tr>
                     <td>{$produto['id']}</td>
                     <td>{$produto['nome']}</td>
-                    <td>R$ {$produto['preco_base']}</td>
+                    <td>R$ " . number_format($produto['preco_base'], 2, ',', '.') . "</td>
                     <td>{$produto['estoque_total']}</td>
                     <td>
                         <button class='btn btn-warning btn-sm btn-editar' data-id='{$produto['id']}'>Editar</button>
                         <button class='btn btn-danger btn-sm btn-excluir' data-id='{$produto['id']}'>Excluir</button>
+                        <button class='btn btn-success btn-sm btn-comprar' data-id='{$produto['id']}' data-nome='{$produto['nome']}' data-preco='{$produto['preco_base']}'>
+                            Comprar
+                        </button>
                     </td>
                 </tr>";
         }
+    }
+
+    public function variacoes($produto_id)
+    {
+        $this->load->model('ProdutoModel');
+        $variacoes = $this->ProdutoModel->obterVariacoes($produto_id);
+
+        // Converte preco_adicional para número
+        foreach ($variacoes as &$variacao) {
+            $variacao['preco_adicional'] = floatval($variacao['preco_adicional']);
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode($variacoes);
     }
 
     public function salvar()

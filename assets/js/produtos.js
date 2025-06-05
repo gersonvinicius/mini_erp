@@ -119,4 +119,256 @@ $(document).ready(function () {
             }
         });
     });
+
+    // CARRINHO
+
+    let carrinhoItens = JSON.parse(sessionStorage.getItem('carrinho')) || [];
+
+    try {
+        // Tenta carregar os itens do sessionStorage
+        const carrinhoSalvo = JSON.parse(sessionStorage.getItem('carrinho'));
+        if (Array.isArray(carrinhoSalvo)) {
+            carrinhoItens = carrinhoSalvo; // Apenas se for um array
+        }
+    } catch (e) {
+        console.warn('Erro ao carregar carrinho do sessionStorage:', e);
+        carrinhoItens = []; // Define carrinho vazio em caso de erro
+    }
+
+    // Função para carregar produtos
+    function carregarProdutos() {
+        $.ajax({
+            url: '/produtos/listar',
+            method: 'GET',
+            success: function (data) {
+                $('#produtos-lista').html(data); // Renderiza a tabela de produtos
+            },
+            error: function () {
+                alert('Erro ao carregar a lista de produtos.');
+            }
+        });
+    }
+
+    // Atualizar o carrinho na interface
+    function atualizarCarrinho() {
+        // Garante que o carrinho seja sempre um array
+        if (!Array.isArray(carrinhoItens)) {
+            carrinhoItens = [];
+        }
+    
+        const lista = $('#lista-carrinho');
+        lista.empty(); // Limpa a lista de itens do carrinho
+        let subtotal = 0;
+    
+        // Se o carrinho estiver vazio, exibe uma mensagem
+        if (carrinhoItens.length === 0) {
+            lista.append('<p class="text-center text-gray-500">Seu carrinho está vazio.</p>');
+            $('#subtotal').text('R$ 0,00');
+            $('#frete').text('R$ 0,00');
+            return; // Sai da função
+        }
+    
+        // Renderiza os itens do carrinho
+        carrinhoItens.forEach((item, index) => {
+            // Garante que o preço e o subtotal sejam valores numéricos
+            const preco = parseFloat(item.preco) || 0;
+            const subtotalItem = preco * item.quantidade;
+        
+            subtotal += subtotalItem;
+        
+            lista.append(`
+                <div class="item-carrinho flex justify-between items-center border-b pb-2 text-sm">
+                    <!-- Informações do Produto -->
+                    <div>
+                        <h6 class="font-bold">${item.nome} - ${item.variacaoNome}</h6>
+                        <p>R$ ${preco.toFixed(2)} x ${item.quantidade}</p>
+                    </div>
+                    <!-- Controles de Quantidade -->
+                    <div class="controle-quantidade">
+                        <button class="alterar-quantidade" data-index="${index}" data-acao="diminuir">−</button>
+                        <span>${item.quantidade}</span>
+                        <button class="alterar-quantidade" data-index="${index}" data-acao="aumentar">+</button>
+                        <button class="remover-item" data-index="${index}">✖</button>
+                    </div>
+                </div>
+            `);
+        });
+    
+        // Calcula o frete e o total
+        const frete = calcularFrete(subtotal);
+        const total = subtotal + frete;
+    
+        // Atualiza os valores na interface
+        $('#subtotal').text(`R$ ${subtotal.toFixed(2)}`);
+        $('#frete').text(`R$ ${frete.toFixed(2)}`);
+        $('#total-desconto').text('R$ 0,00'); // Exemplo: pode ser ajustado para cupom de desconto
+        sessionStorage.setItem('carrinho', JSON.stringify(carrinhoItens));
+    }
+
+    // Calcular frete com base no subtotal
+    function calcularFrete(subtotal) {
+        if (subtotal > 200) return 0; // Frete grátis para pedidos acima de R$ 200
+        if (subtotal >= 52 && subtotal <= 166.59) return 15; // Valor fixo
+        return 20; // Frete padrão
+    }
+
+    let variacaoSelecionada = null;
+
+    // Quando o modal de variações é aberto
+    $(document).on('click', '.btn-comprar', function () {
+        const produtoId = $(this).data('id');
+        const produtoNome = $(this).data('nome');
+
+        variacaoSelecionada = {
+            produtoId: produtoId,
+            produtoNome: produtoNome
+        };
+
+        // Obter variações via AJAX
+        $.get(`/produtos/variacoes/${produtoId}`, function (variacoes) {
+            const lista = $('#lista-variacoes');
+            lista.empty();
+
+            variacoes.forEach(variacao => {
+                const precoAdicional = parseFloat(variacao.preco_adicional) || 0;
+
+                lista.append(`
+                    <div class="flex items-center">
+                        <input type="radio" name="variacao" value="${variacao.id}" data-nome="${variacao.nome}" data-preco="${precoAdicional}">
+                        <label for="variacao-${variacao.id}" class="ml-2">${variacao.nome} (R$ ${precoAdicional.toFixed(2)})</label>
+                    </div>
+                `);
+            });
+
+            $('#modal-variacao').removeClass('hidden'); // Exibe o modal
+        }).fail(function () {
+            alert('Erro ao carregar as variações. Tente novamente.');
+        });
+    });
+
+    // Adicionar variação ao carrinho
+    $('#add-variacao').on('click', function () {
+        const radioSelecionado = $('input[name="variacao"]:checked');
+        if (!radioSelecionado.length) {
+            alert('Selecione uma variação!');
+            return;
+        }
+    
+        const variacaoId = radioSelecionado.val();
+        const variacaoNome = radioSelecionado.data('nome');
+        const precoAdicional = parseFloat(radioSelecionado.data('preco')) || 0;
+    
+        const itemExistente = carrinhoItens.find(
+            item => item.produtoId === variacaoSelecionada.produtoId && item.variacaoId === variacaoId
+        );
+    
+        if (itemExistente) {
+            itemExistente.quantidade += 1;
+            itemExistente.subtotal = itemExistente.quantidade * itemExistente.preco;
+        } else {
+            carrinhoItens.push({
+                produtoId: variacaoSelecionada.produtoId,
+                nome: variacaoSelecionada.produtoNome,
+                variacaoId,
+                variacaoNome,
+                preco: precoAdicional,
+                quantidade: 1,
+                subtotal: precoAdicional
+            });
+        }
+    
+        sessionStorage.setItem('carrinho', JSON.stringify(carrinhoItens)); // Atualiza o carrinho no armazenamento
+        atualizarCarrinho(); // Atualiza a interface do carrinho
+        $('#modal-variacao').addClass('hidden'); // Fecha o modal
+        alert('Produto adicionado ao carrinho!');
+    });
+
+    // Alterar quantidade de itens no carrinho
+    $(document).on('click', '.alterar-quantidade', function () {
+        const index = $(this).data('index');
+        const acao = $(this).data('acao');
+
+        if (acao === 'aumentar') carrinhoItens[index].quantidade += 1;
+        if (acao === 'diminuir' && carrinhoItens[index].quantidade > 1) carrinhoItens[index].quantidade -= 1;
+
+        carrinhoItens[index].subtotal = carrinhoItens[index].quantidade * carrinhoItens[index].preco;
+        atualizarCarrinho();
+    });
+
+    // Remover item do carrinho
+    $(document).on('click', '.remover-item', function () {
+        const index = $(this).data('index');
+        carrinhoItens.splice(index, 1);
+        atualizarCarrinho();
+    });
+
+    // Inicializar carrinho e carregar produtos
+    carregarProdutos();
+    atualizarCarrinho();
+
+    // Limpar o carrinho
+    $('#limpar-carrinho').on('click', function () {
+        if (confirm('Tem certeza de que deseja limpar o carrinho?')) {
+            carrinhoItens = []; // Reseta o carrinho
+            sessionStorage.setItem('carrinho', JSON.stringify(carrinhoItens)); // Atualiza o sessionStorage
+            atualizarCarrinho(); // Atualiza a interface
+            alert('Carrinho limpo com sucesso!');
+        }
+    });
+
+    $('#finalizar-compra').on('click', function () {
+        if (carrinhoItens.length === 0) {
+            alert('Seu carrinho está vazio!');
+            return;
+        }
+    
+        // Redirecionar para o checkout
+        // window.location.href = '/checkout';
+    });
+
+    // Abrir o carrinho
+    $('#abrir-carrinho').on('click', function () {
+        $('#carrinho').addClass('show'); // Adiciona a classe que exibe o carrinho
+    });
+    
+    $('#fechar-carrinho').on('click', function () {
+        $('#carrinho').removeClass('show'); // Remove a classe para ocultar o carrinho
+    });
+
+    $('#aplicar-cupom').on('click', function () {
+        const codigoCupom = $('#cupom-codigo').val().trim();
+        const subtotal = carrinhoItens.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+    
+        if (!codigoCupom) {
+            alert('Digite um código de cupom.');
+            return;
+        }
+    
+        // Envia o cupom ao backend via AJAX
+        $.ajax({
+            url: '/cupons/validar', // Rota do método validar no controller Cupons
+            method: 'POST',
+            data: { codigo: codigoCupom, subtotal: subtotal },
+            success: function (response) {
+                const data = JSON.parse(response);
+    
+                if (data.error) {
+                    alert(data.error);
+                    $('#total-desconto').text('R$ 0,00'); // Reseta o desconto
+                    return;
+                }
+    
+                // Aplica o desconto ao carrinho
+                const desconto = parseFloat(data.desconto);
+                const totalComDesconto = subtotal - desconto;
+    
+                $('#total-desconto').text(`- R$ ${desconto.toFixed(2)}`);
+                $('#subtotal').text(`R$ ${totalComDesconto.toFixed(2)}`);
+                alert('Cupom aplicado com sucesso!');
+            },
+            error: function () {
+                alert('Erro ao validar o cupom. Tente novamente.');
+            }
+        });
+    });
 });

@@ -11,6 +11,16 @@ class ProdutoModel extends CI_Model
         return $this->db->get()->result_array();
     }
 
+    public function obterVariacoes($produto_id)
+    {
+        return $this->db
+            ->select('id, nome, preco_adicional')
+            ->from('variacoes')
+            ->where('produto_id', $produto_id)
+            ->get()
+            ->result_array();
+    }
+
     public function salvar($dados)
     {
         $this->db->insert('produtos', $dados);

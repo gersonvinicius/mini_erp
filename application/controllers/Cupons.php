@@ -60,4 +60,47 @@ class Cupons extends CI_Controller
         $this->load->model('CupomModel');
         $this->CupomModel->excluir($id);
     }
+
+    public function validar()
+    {
+        $this->load->model('CupomModel');
+
+        $codigo = $this->input->post('codigo');
+        $subtotal = $this->input->post('subtotal');
+
+        // Busca o cupom no banco de dados
+        $cupom = $this->CupomModel->obterPorCodigo($codigo);
+
+        // Valida se o cupom existe
+        if (!$cupom) {
+            echo json_encode(['error' => 'Cupom inválido ou inexistente.']);
+            return;
+        }
+
+        // Valida se o cupom está expirado
+        if (date('Y-m-d') > $cupom['validade']) {
+            echo json_encode(['error' => 'Cupom expirado.']);
+            return;
+        }
+
+        // Valida o valor mínimo do cupom
+        if ($cupom['valor_minimo'] && $subtotal < $cupom['valor_minimo']) {
+            echo json_encode(['error' => 'O subtotal não atende ao valor mínimo de R$ ' . number_format($cupom['valor_minimo'], 2, ',', '.') . ' para este cupom.']);
+            return;
+        }
+
+        // Calcula o desconto
+        $desconto = 0;
+        if ($cupom['tipo'] === 'fixo') {
+            $desconto = (float)$cupom['valor_desconto'];
+        } elseif ($cupom['tipo'] === 'percentual') {
+            $desconto = ($subtotal * (float)$cupom['valor_desconto']) / 100;
+        }
+
+        echo json_encode([
+            'success' => true,
+            'desconto' => $desconto,
+            'tipo' => $cupom['tipo']
+        ]);
+    }
 }

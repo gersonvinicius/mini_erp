@@ -27,4 +27,9 @@ class CupomModel extends CI_Model
     {
         $this->db->where('id', $id)->delete('cupons');
     }
+
+    public function obterPorCodigo($codigo)
+    {
+        return $this->db->get_where('cupons', ['codigo' => $codigo])->row_array();
+    }
 }

@@ -82,6 +82,82 @@ ob_start();
     </div>
 </div>
 
+<script id="produto-template" type="text/template">
+    <tr>
+        <td>{id}</td>
+        <td>{nome}</td>
+        <td>R$ {preco_base}</td>
+        <td>{estoque_total}</td>
+        <td>
+            <button class="btn btn-warning btn-sm btn-editar" data-id="{id}">Editar</button>
+            <button class="btn btn-danger btn-sm btn-excluir" data-id="{id}">Excluir</button>
+            <button class="btn btn-success btn-sm btn-comprar" data-id="{id}" data-nome="{nome}" data-preco="{preco_base}">Comprar</button>
+        </td>
+    </tr>
+</script>
+
+<!-- Carrinho Fixo -->
+<div id="carrinho" class="fixed top-0 right-0 w-80 bg-white shadow-lg hidden">
+    <!-- Cabeçalho do Carrinho -->
+    <div class="flex justify-between items-center bg-gray-800 text-white p-3">
+        <h2 class="text-lg font-bold">Carrinho</h2>
+        <button id="fechar-carrinho" class="text-red-500 text-xl">✖</button>
+    </div>
+
+    <!-- Itens no Carrinho -->
+    <div class="p-3">
+        <h3 class="text-md font-semibold mb-3">Itens no carrinho:</h3>
+        <div id="lista-carrinho" class="space-y-3">
+            <!-- Os itens serão gerados dinamicamente -->
+        </div>
+
+        <!-- Cupom -->
+        <div class="mt-4">
+            <label for="cupom-codigo" class="block text-sm font-medium text-gray-700">Cupom:</label>
+            <input type="text" id="cupom-codigo" class="form-input mt-1 w-full border-gray-300">
+            <button id="aplicar-cupom" class="mt-2 w-full bg-blue-600 text-white p-2 rounded">Aplicar</button>
+        </div>
+
+        <!-- Frete -->
+        <div class="mt-4">
+            <label for="cep" class="block text-sm font-medium text-gray-700">CEP:</label>
+            <input type="text" id="cep" class="form-input mt-1 w-full border-gray-300" placeholder="Digite o CEP">
+            <button id="calcular-frete" class="mt-2 w-full bg-green-600 text-white p-2 rounded">Calcular</button>
+        </div>
+
+        <!-- Resumo -->
+        <div class="mt-4 border-t pt-3">
+            <div class="flex justify-between text-sm">
+                <span>Desconto:</span>
+                <span id="total-desconto">R$ 0,00</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span>Subtotal:</span>
+                <span id="subtotal">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Finalizar Pedido -->
+        <button id="finalizar-compra" class="mt-4 w-full bg-blue-600 text-white p-3 rounded">Finalizar</button>
+        <button id="limpar-carrinho" class="mt-2 w-full bg-red-600 text-white p-3 rounded">
+            Limpar Carrinho
+        </button>
+    </div>
+</div>
+
+<!-- Botão para Expandir o Carrinho -->
+<button id="abrir-carrinho" class="fixed top-5 right-5 bg-blue-600 text-white p-3 rounded-full shadow-lg">
+    🛒
+</button>
+
+<div id="modal-variacao" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white p-5 rounded shadow-lg w-96">
+        <h3 class="text-lg font-bold mb-3">Selecione uma Variação</h3>
+        <div id="lista-variacoes" class="space-y-3"></div>
+        <button id="add-variacao" class="mt-4 bg-green-600 text-white p-2 rounded w-full">Adicionar ao Carrinho</button>
+    </div>
+</div>
+
 <?php
 $content = ob_get_clean();
 $scripts = '<script src="/assets/js/produtos.js"></script>';
