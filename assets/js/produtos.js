@@ -318,6 +318,7 @@ $(document).ready(function () {
             $('#cliente-email').val('');
             $('#cliente-nome').val('');
             $('#frete').text('R$ 0,00');
+            $('#endereco-resultado').text('');
             $('#total-desconto').text('R$ 0,00');
             alert('Carrinho limpo com sucesso!');
         }
@@ -402,6 +403,7 @@ $(document).ready(function () {
                 $('#cliente-cep').val('');
                 $('#cliente-email').val('');
                 $('#cliente-nome').val('');
+                $('#endereco-resultado').text('');
                 $('#total-desconto').text('R$ 0,00');
             },
             error: function () {

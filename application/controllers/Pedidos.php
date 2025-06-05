@@ -104,11 +104,65 @@ class Pedidos extends CI_Controller
                 ]);
             }
 
+            $enderecoFormatado = "{$endereco['logradouro']}, {$endereco['bairro']}, {$endereco['localidade']}-{$endereco['uf']}";
+            $this->enviarEmailConfirmacao($clienteEmail, $clienteNome, $enderecoFormatado, $total);
+
             echo json_encode(['sucesso' => 'Pedido finalizado com sucesso']);
         } catch (Exception $e) {
             // Captura qualquer erro inesperado e retorna uma mensagem amigável
             log_message('error', 'Erro ao finalizar o pedido: ' . $e->getMessage());
             echo json_encode(['erro' => 'Ocorreu um erro inesperado ao processar o pedido. Por favor, tente novamente mais tarde.']);
+        }
+    }
+
+    private function enviarEmailConfirmacao($clienteEmail, $clienteNome, $endereco, $total)
+    {
+        // Carrega a biblioteca de e-mail
+        $this->load->library('email');
+
+        // Configuração do Mailtrap
+        $config = array(
+            'protocol'    => 'smtp',
+            'smtp_host'   => 'sandbox.smtp.mailtrap.io', // Servidor SMTP do Mailtrap
+            'smtp_port'   => 2525, // Porta do Mailtrap
+            'smtp_user'   => '04249aae5d6022', // Usuário SMTP
+            'smtp_pass'   => '39a92a96096452', // Senha SMTP
+            'smtp_crypto' => 'tls', // Protocolo de criptografia
+            'mailtype'    => 'html', // Tipo do e-mail: HTML
+            'charset'     => 'utf-8', // Codificação do conteúdo
+            'wordwrap'    => TRUE, // Quebra automática de linhas
+            'crlf'        => "\r\n", // Quebra de linha (compatível com SMTP)
+            'newline'     => "\r\n", // Nova linha (compatível com SMTP)
+        );
+
+        // Inicializa a biblioteca de e-mail com as configurações
+        $this->email->initialize($config);
+
+        // Define os dados do e-mail
+        $this->email->from('no-reply@erp.com', 'ERP'); // Remetente
+        $this->email->to($clienteEmail); // Destinatário
+        $this->email->subject('Confirmação do Pedido'); // Assunto
+        $this->email->message("
+            <h1>Obrigado por sua compra, {$clienteNome}!</h1>
+            <p>Seu pedido foi recebido com sucesso.</p>
+            <p><strong>Endereço de Entrega:</strong> {$endereco}</p>
+            <p><strong>Total da Compra:</strong> R$ {$total}</p>
+            <p>Atenciosamente,<br>Equipe ERP</p>
+        ");
+
+        // Tenta enviar o e-mail
+        try {
+            if (!$this->email->send()) {
+                $erro = $this->email->print_debugger(); // Captura os detalhes do erro
+                log_message('error', 'Erro ao enviar e-mail: ' . $erro); // Registra no log
+                echo '<pre>' . $erro . '</pre>'; // Exibe o erro no navegador (para testes)
+                return ['status' => false, 'erro' => $erro];
+            }
+            return ['status' => true];
+        } catch (Exception $e) {
+            log_message('error', 'Exceção ao enviar e-mail: ' . $e->getMessage());
+            echo '<pre>Erro: ' . $e->getMessage() . '</pre>'; // Exibe o erro no navegador (para testes)
+            return ['status' => false, 'erro' => $e->getMessage()];
         }
     }
 }
